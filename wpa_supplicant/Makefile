@@ -1164,7 +1164,7 @@ LIBS += $(DBUS_LIBS)
 
 ifdef CONFIG_CTRL_IFACE_RBUS
 RBUS_CFLAGS += -DCONFIG_CTRL_IFACE_RBUS -DCONFIG_RBUS
-RBUS_OBJS += rbus/rbus.o rbus/fs.o rbus/libixp_request.o
+RBUS_OBJS += rbus/rbus.o rbus/fs.o rbus/libixp_request.o rbus/rbus_event.o
 LIBS += -lixp
 endif
 

@@ -98,6 +98,8 @@ void wpas_notify_state_changed(struct wpa_supplicant *wpa_s,
 	/* notify the new DBus API */
 	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_STATE);
 
+        wpas_rbus_signal_prop_changed(wpa_s, WPAS_RBUS_PROP_STATE);
+
 #ifdef CONFIG_P2P
 	if (new_state == WPA_COMPLETED)
 		wpas_p2p_notif_connected(wpa_s);
@@ -119,24 +121,30 @@ void wpas_notify_state_changed(struct wpa_supplicant *wpa_s,
 void wpas_notify_network_changed(struct wpa_supplicant *wpa_s)
 {
 	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_CURRENT_NETWORK);
+	wpas_rbus_signal_prop_changed(wpa_s, WPAS_RBUS_PROP_CURRENT_NETWORK);
+
 }
 
 
 void wpas_notify_ap_scan_changed(struct wpa_supplicant *wpa_s)
 {
 	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_AP_SCAN);
+        wpas_rbus_signal_prop_changed(wpa_s, WPAS_RBUS_PROP_AP_SCAN);
+
 }
 
 
 void wpas_notify_bssid_changed(struct wpa_supplicant *wpa_s)
 {
 	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_CURRENT_BSS);
+        wpas_rbus_signal_prop_changed(wpa_s, WPAS_RBUS_PROP_CURRENT_BSS);
 }
 
 
 void wpas_notify_auth_changed(struct wpa_supplicant *wpa_s)
 {
 	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_CURRENT_AUTH_MODE);
+	wpas_rbus_signal_prop_changed(wpa_s, WPAS_RBUS_PROP_CURRENT_AUTH_MODE);
 }
 
 
@@ -161,6 +169,8 @@ void wpas_notify_scanning(struct wpa_supplicant *wpa_s)
 
 	/* notify the new DBus API */
 	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_SCANNING);
+        wpas_rbus_signal_prop_changed(wpa_s, WPAS_RBUS_PROP_SCANNING);
+
 }
 
 
