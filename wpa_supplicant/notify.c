@@ -22,6 +22,7 @@
 #include "dbus/dbus_common.h"
 #include "dbus/dbus_old.h"
 #include "dbus/dbus_new.h"
+#include "rbus/rbus.h"
 #include "driver_i.h"
 #include "scan.h"
 #include "p2p_supplicant.h"
@@ -38,6 +39,12 @@ int wpas_notify_supplicant_initialized(struct wpa_global *global)
 	}
 #endif /* CONFIG_DBUS */
 
+#ifdef CONFIG_RBUS
+        global->rbus = wpas_rbus_init(global);
+        if (global->rbus == NULL)
+            return -1;
+#endif
+
 	return 0;
 }
 
@@ -48,6 +55,13 @@ void wpas_notify_supplicant_deinitialized(struct wpa_global *global)
 	if (global->dbus)
 		wpas_dbus_deinit(global->dbus);
 #endif /* CONFIG_DBUS */
+
+#ifdef CONFIG_RBUS
+        if (global->rbus)
+                wpas_rbus_deinit(global->rbus);
+#endif
+
+
 }
 
 

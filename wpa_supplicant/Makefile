@@ -1162,6 +1162,16 @@ OBJS += $(DBUS_OBJS)
 CFLAGS += $(DBUS_CFLAGS)
 LIBS += $(DBUS_LIBS)
 
+ifdef CONFIG_CTRL_IFACE_RBUS
+RBUS_CFLAGS += -DCONFIG_CTRL_IFACE_RBUS -DCONFIG_RBUS
+RBUS_OBJS += rbus/rbus.o rbus/fs.o rbus/libixp_request.o
+LIBS += -lixp
+endif
+
+OBJS += $(RBUS_OBJS)
+CFLAGS += $(RBUS_CFLAGS)
+LIBS += $(RBUS_LIBS)
+
 ifdef CONFIG_READLINE
 OBJS_c += ../src/utils/edit_readline.o
 LIBS_c += -lncurses -lreadline

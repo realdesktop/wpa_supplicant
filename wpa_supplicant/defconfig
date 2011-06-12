@@ -366,6 +366,9 @@ CONFIG_PEERKEY=y
 # Add introspection support for new DBus control interface
 #CONFIG_CTRL_IFACE_DBUS_INTRO=y
 
+# Support brand new Unix-friendly 9p-based interface
+CONFIG_CTRL_IFACE_RBUS=y
+
 # Add support for loading EAP methods dynamically as shared libraries.
 # When this option is enabled, each EAP method can be either included
 # statically (CONFIG_EAP_<method>=y) or dynamically (CONFIG_EAP_<method>=dyn).
