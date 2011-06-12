@@ -27,4 +27,6 @@ void wpas_rbus_deinit(struct wpas_rbus_priv *priv);
 
 void wpas_rbus_signal_prop_changed(struct wpa_supplicant *wpa_s, enum wpas_rbus_prop prop);
 
+void rbus_event(const char *format, ...);
+
 #endif

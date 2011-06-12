@@ -17,5 +17,7 @@ char* wpas_rbus_prop_s[] = {
 
 void wpas_rbus_signal_prop_changed(struct wpa_supplicant *wpa_s, enum wpas_rbus_prop prop) {
     wpa_printf(MSG_ERROR, "rbus: prop %d %s changed", prop, wpas_rbus_prop_s[prop]);
+
+    rbus_event("prop %s\n", wpas_rbus_prop_s[prop]);
 }
 
