@@ -44,7 +44,8 @@ struct hostapd_hw_modes;
 struct ctrl_iface_priv;
 struct ctrl_iface_global_priv;
 struct wpas_dbus_priv;
-struct wpas_rbus_priv;
+struct rbus_root;
+struct rbus_t;
 
 
 /**
@@ -208,7 +209,7 @@ struct wpa_global {
 	struct wpa_params params;
 	struct ctrl_iface_global_priv *ctrl_iface;
 	struct wpas_dbus_priv *dbus;
-	struct wpas_rbus_priv *rbus;
+	struct rbus_root *rbus_root;
 	void **drv_priv;
 	size_t drv_count;
 	struct os_time suspend_time;
@@ -338,6 +339,9 @@ struct wpa_supplicant {
 #ifdef CONFIG_CTRL_IFACE_DBUS_NEW
 	char *dbus_new_path;
 #endif /* CONFIG_CTRL_IFACE_DBUS_NEW */
+#ifdef CONFIG_CTRL_IFACE_RBUS
+        struct rbus_t *rbus;
+#endif
 	char bridge_ifname[16];
 
 	char *confname;

@@ -40,8 +40,8 @@ int wpas_notify_supplicant_initialized(struct wpa_global *global)
 #endif /* CONFIG_DBUS */
 
 #ifdef CONFIG_RBUS
-        global->rbus = wpas_rbus_init(global);
-        if (global->rbus == NULL)
+        global->rbus_root = wpas_rbus_init(global);
+        if (global->rbus_root == NULL)
             return -1;
 #endif
 
@@ -57,8 +57,8 @@ void wpas_notify_supplicant_deinitialized(struct wpa_global *global)
 #endif /* CONFIG_DBUS */
 
 #ifdef CONFIG_RBUS
-        if (global->rbus)
-                wpas_rbus_deinit(global->rbus);
+        if (global->rbus_root)
+                wpas_rbus_deinit(global->rbus_root);
 #endif
 
 
@@ -72,6 +72,10 @@ int wpas_notify_iface_added(struct wpa_supplicant *wpa_s)
 
 	if (wpas_dbus_register_interface(wpa_s))
 		return -1;
+
+	if (wpas_rbus_register_interface(wpa_s))
+		return -1;
+
 
 	return 0;
 }

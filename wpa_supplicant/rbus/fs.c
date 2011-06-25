@@ -10,19 +10,7 @@
 #include <string.h>
 #include <time.h>
 
-
-
-typedef union IxpFileIdU IxpFileIdU;
-typedef short bool;
-
-union IxpFileIdU {
-	char*		buf;
-	void*		ref;
-};
-
-
-#include <ixp.h>
-#include <ixp_srvutil.h>
+#include "rbus.h"
 
 typedef int64_t		vlong;
 #define QID(t, i) (((vlong)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
@@ -37,21 +25,22 @@ typedef int64_t		vlong;
 #endif
 
 
-static IxpPending	events;
+/* static IxpPending	events; */
 
 char    buffer[8092];
-char*   _buffer;
-char*   const _buf_end = buffer + sizeof buffer;
+
+extern struct rbus_root* RbusRoot;
+
 
 void
-rbus_event(const char *format, ...) {
+rbus_event(IxpPending *events, const char *format, ...) {
 	va_list ap;
 
 	va_start(ap, format);
 	vsnprintf(buffer, sizeof buffer, format, ap);
 	va_end(ap);
 
-	ixp_pending_write(&events, buffer, strlen(buffer));
+	ixp_pending_write(events, buffer, strlen(buffer));
 }
 
 
@@ -107,6 +96,7 @@ lookup_file(IxpFileId *parent, char *name)
 
 	if(!(parent->tab.perm & P9_DMDIR))
 		return NULL;
+
 	dir = dirtab[parent->tab.type];
 	last = &ret;
 	ret = NULL;
@@ -123,6 +113,8 @@ lookup_file(IxpFileId *parent, char *name)
 			push_file(file->tab.name, 0, 0);
 			file->p.ref = parent->p.ref;
 			file->index = parent->index;
+
+                        file->p.rbus = &RbusRoot->rbus;
 			/* Special considerations: */
 			if(name)
 				goto LastItem;
@@ -187,7 +179,7 @@ fs_open(Ixp9Req *r)
 
 	switch(f->tab.type) {
 	case FsFEvent:
-		ixp_pending_pushfid(&events, r->fid);
+		ixp_pending_pushfid(&f->p.rbus->events, r->fid);
 		break;
         }
 

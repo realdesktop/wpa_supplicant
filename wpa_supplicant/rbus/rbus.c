@@ -14,16 +14,17 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <ixp.h>
-
-extern Ixp9Srv p9srv;
 
 #include "rbus.h"
+#include "../wpa_supplicant_i.h"
+
+extern Ixp9Srv p9srv;
+struct rbus_root* RbusRoot = NULL;
 
 /*
  * Callback from epool
  * */
-static void process_watch_read(int sock, struct wpas_rbus_priv *priv, IxpConn* conn)
+static void process_watch_read(int sock, struct rbus_root *priv, IxpConn* conn)
 {
         conn->read(conn);
 }
@@ -55,9 +56,9 @@ void unregister_fd(IxpConn* conn) {
 /*
  * Init function called from notify.c
  * */
-struct wpas_rbus_priv * wpas_rbus_init(struct wpa_global *global)
+struct rbus_root * wpas_rbus_init(struct wpa_global *global)
 {
-    struct wpas_rbus_priv *priv;
+    struct rbus_root *priv;
 
     priv = os_zalloc(sizeof(*priv));
     if (priv == NULL)
@@ -86,12 +87,31 @@ struct wpas_rbus_priv * wpas_rbus_init(struct wpa_global *global)
 
     priv->srv = srv;
 
+    RbusRoot = priv;
+
     return priv;
 }
 
-void wpas_rbus_deinit(struct wpas_rbus_priv *priv) {
+void wpas_rbus_deinit(struct rbus_root *priv) {
 
     eloop_unregister_sock(priv->srv->conn->fd, EVENT_TYPE_READ);
 
     // FIXME: free resources, shutdown ixp, cleanup sockets
 }
+
+
+int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s) {
+
+    wpa_printf(MSG_ERROR, "interface add");
+
+    struct rbus_t *priv;
+
+    priv = os_zalloc(sizeof(*priv));
+    priv->native = wpa_s;
+    priv->root = wpa_s->global->rbus_root;
+
+    wpa_s->rbus = priv;
+
+    return 0;
+
+};

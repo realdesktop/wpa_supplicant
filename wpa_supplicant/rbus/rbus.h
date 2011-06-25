@@ -2,12 +2,38 @@
 #define RBUS_H
 
 struct wpa_global;
+struct wpa_supplicant;
+
+struct rbus_root;
+struct rbus_t;
+
+#include <ixp.h>
+
+typedef union IxpFileIdU IxpFileIdU;
+typedef struct IxpPending	IxpPending;
+typedef short bool;
+
+union IxpFileIdU {
+	void*		ref;
+        struct rbus_t* rbus;
+};
+
+
+
+#include <ixp_srvutil.h>
+
+
 typedef struct IxpServer IxpServer;
 
-typedef int rbus_con;
+struct rbus_t {
+        void *native;
+        struct rbus_root *root;
+        IxpPending events;
+};
 
-struct wpas_rbus_priv {
+struct rbus_root {
         IxpServer *srv;
+        struct rbus_t rbus;
 };
 
 enum wpas_rbus_prop {
@@ -21,12 +47,14 @@ enum wpas_rbus_prop {
 };
 
 
-struct wpas_rbus_priv * wpas_rbus_init(struct wpa_global *global);
-void wpas_rbus_deinit(struct wpas_rbus_priv *priv);
+struct rbus_root * wpas_rbus_init(struct wpa_global *global);
+void wpas_rbus_deinit(struct rbus_root *priv);
 
 
 void wpas_rbus_signal_prop_changed(struct wpa_supplicant *wpa_s, enum wpas_rbus_prop prop);
 
-void rbus_event(const char *format, ...);
+int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s);
+
+void rbus_event(IxpPending *events, const char *format, ...);
 
 #endif
