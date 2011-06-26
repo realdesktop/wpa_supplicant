@@ -17,11 +17,22 @@ char* wpas_rbus_prop_s[] = {
 };
 
 void wpas_rbus_signal_prop_changed(struct wpa_supplicant *wpa_s, enum wpas_rbus_prop prop) {
-    wpa_printf(MSG_ERROR, "rbus: prop %d %s changed", prop, wpas_rbus_prop_s[prop]);
 
-    rbus_event(&wpa_s->rbus->events, "prop %s\n", wpas_rbus_prop_s[prop]);
+    char *buf = "(wtf?)", *name;
 
-    rbus_event(&wpa_s->global->rbus_root->rbus.events, "net prop %s\n", wpas_rbus_prop_s[prop]);
+    name = wpas_rbus_prop_s[prop];
+
+    struct rbus_prop *rprop = wpa_s->rbus->props;
+
+    for(; rprop && rprop->name[0]; rprop++) {
+            if(!strcmp(name, rprop->name)) {
+                    buf = rprop->read(wpa_s->rbus, name);
+            }
+    };
+
+    wpa_printf(MSG_ERROR, "rbus: prop %d %s changed = %s", prop, name, buf);
+
+    rbus_event(&wpa_s->rbus->events, "prop %s %s\n", wpas_rbus_prop_s[prop], buf);
 
 }
 

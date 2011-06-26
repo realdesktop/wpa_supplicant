@@ -1,6 +1,8 @@
 #ifndef RBUS_WPAS_H
 #define RBUS_WPAS_H
 
+#define WPAS_DBUS_AUTH_MODE_MAX 64
+
 struct wpa_global;
 struct wpa_supplicant;
 
