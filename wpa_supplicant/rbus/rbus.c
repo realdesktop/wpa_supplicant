@@ -17,21 +17,23 @@
 
 #include <rbus.h>
 #include "rbus_wpas.h"
+#include "../src/common/wpa_common.h"
 #include "../wpa_supplicant_i.h"
 #include "../config.h"
 #include "../config_ssid.h"
 #include "../bss.h"
 
+#define end {""}
+
 static struct rbus_child root_children[] = {
-    {"iface", NULL},
-/* move to net    {"net", NULL}, */
-    NULL,
+    {"iface", NULL, NULL},
+    end
 };
 
 static struct rbus_child iface_children[] = {
     {"net", NULL},
     {"bss", NULL},
-    NULL,
+    end
 };
 
 static char zomg[] = "ZOMG\n";
@@ -43,7 +45,7 @@ char* read_state(struct rbus_t *rbus, char* buf) {
 char* read_iface_state(struct rbus_t *rbus, char* buf) {
     struct wpa_supplicant *wpa_s = rbus->native;
 
-    return wpa_supplicant_state_txt(wpa_s->wpa_state);
+    return (char*)wpa_supplicant_state_txt(wpa_s->wpa_state);
 };
 
 
@@ -57,7 +59,7 @@ static struct rbus_prop root_props[] = {
  * NO ->  {"interfaces"
  *  {"eap_methods",
  *  */
-    NULL,
+    end
 };
 
 #define pr(sub, name) char* read_##sub##_##name(struct rbus_t *rbus, char* buf)
@@ -81,7 +83,7 @@ net_conf_int_prop(bss_expiration_age);
 net_conf_int_prop(bss_expiration_scan_count);
 
 char* read_iface_country(struct rbus_t *rbus, char* buf) {
-    char country[3];
+    static char country[3];
     struct wpa_supplicant *wpa_s = rbus->native;
 
     country[0] = wpa_s->conf->country[0];
@@ -94,7 +96,7 @@ char* read_iface_country(struct rbus_t *rbus, char* buf) {
 #define iface_str_prop(name) \
 char* read_iface_##name(struct rbus_t *rbus, char* buf) { \
     struct wpa_supplicant *wpa_s = rbus->native; \
-    return wpa_s->name; \
+    return (char*)wpa_s->name; \
 };
 
 iface_str_prop(ifname);
@@ -139,7 +141,7 @@ pr(iface, current_auth_mode) {
                                          wpa_s->current_ssid->proto);
     }
 
-    return auth_mode;
+    return (char*)auth_mode;
 
 }
 
@@ -178,7 +180,7 @@ static struct rbus_prop iface_props[] = {
  *      country
  *      process_credentials
  * */
-    NULL,
+    end
 };
 
 char *read_net_enabled(struct rbus_t *rbus, char* buf) {
@@ -201,7 +203,7 @@ static struct rbus_prop net_props[] = {
  *
  * */
     {"enabled", read_net_enabled},
-    NULL,
+    end
 };
 
 char *read_bss_ssid(struct rbus_t *rbus, char* buf) {
@@ -210,7 +212,7 @@ char *read_bss_ssid(struct rbus_t *rbus, char* buf) {
     struct wpa_bss *res = wpa_bss_get_id(bss->wpa_s, bss->id);
 
     if(res->ssid)
-        return res->ssid;
+        return (char*)res->ssid;
     else
         return "NONE";
 };
@@ -228,7 +230,7 @@ static struct rbus_prop bss_props[] = {
     {"rsn",
     {"ies",
 */
-    NULL,
+    end
 };
 
 /*
