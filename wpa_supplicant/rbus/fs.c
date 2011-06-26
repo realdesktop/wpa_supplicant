@@ -277,22 +277,24 @@ fs_read(Ixp9Req *r)
 			ixp_pending_respond(r);
 			return;
 		}
-		//t = &actiontab[f->tab.type];
-                /*
-		if(f->tab.type < nelem(actiontab)) {
-			if(t->read)
-				buf = t->read(f->p.ref);
-			else if(t->buffer && t->max)
-				buf = structptr(f->p.ref, char, t->buffer);
-			else if(t->buffer)
-				buf = structmember(f->p.ref, char*, t->buffer);
-			else
-				goto done;
-			n = t->size ? structmember(f->p.ref, int, t->size) : strlen(buf);
-			ixp_srv_readbuf(r, buf, n);
+
+                struct rbus_prop *prop = f->p.rbus->props;
+
+                for(; prop && prop->name[0]; prop++) {
+                        if(strcmp(prop->name, f->tab.name))
+                            continue;
+
+                        buf = prop->read(f->p.rbus, buf);
+                        n = strlen(buf);
+
+                        ixp_srv_readbuf(r, buf, n);
 			ixp_respond(r, NULL);
 			found++;
-		}*/
+
+                        break;
+
+                }
+
 	done:
 		switch(f->tab.type) {
 		default:

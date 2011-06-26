@@ -17,6 +17,7 @@
 
 #include "rbus.h"
 #include "../wpa_supplicant_i.h"
+#include "../config_ssid.h"
 
 extern Ixp9Srv p9srv;
 struct rbus_root* RbusRoot = NULL;
@@ -29,22 +30,31 @@ static struct rbus_child root_children[] = {
 
 static char zomg[] = "ZOMG\n";
 
-static int read_state(struct rbus_t *rbus, char* buf) {
-    buf = zomg;
-
-    return 0;
+char* read_state(struct rbus_t *rbus, char* buf) {
+    return zomg;
 };
 
-static int read_iface_state(struct rbus_t *rbus, char* buf) {
-    buf = zomg;
+char* read_iface_state(struct rbus_t *rbus, char* buf) {
+    struct wpa_supplicant *wpa_s = rbus->native;
 
-    return 0;
+    return wpa_supplicant_state_txt(wpa_s->wpa_state);
 };
 
-static int read_iface_network(struct rbus_t *rbus, char* buf) {
-    buf = zomg;
+char* read_iface_network(struct rbus_t *rbus, char* buf) {
+    char ssid[256];
+    struct wpa_supplicant *wpa_s = rbus->native;
 
-    return 0;
+    if(wpa_s->current_ssid) {
+        sprintf(ssid, "%u", wpa_s->current_ssid->ssid);
+        return ssid;
+    } else {
+        return "none";
+    }
+};
+
+char* read_iface_name(struct rbus_t *rbus, char* buf) {
+    struct wpa_supplicant *wpa_s = rbus->native;
+    return wpa_s->ifname;
 };
 
 
@@ -56,7 +66,9 @@ static struct rbus_prop root_props[] = {
 
 static struct rbus_prop iface_props[] = {
     {"state", read_iface_state},
-    {"current_network", read_iface_network},
+    {"current_ssid", read_iface_network},
+    {"ifname", read_iface_name},
+    NULL,
 };
 
 /*

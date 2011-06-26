@@ -33,11 +33,11 @@ struct rbus_child {
 };
 
 
-typedef int (*rbus_prop_read)(struct rbus_t*, char*);
+typedef char* (*rbus_prop_read)(struct rbus_t*, char*);
 
 struct rbus_prop {
         char name[32];
-        rbus_prop_read *read;
+        rbus_prop_read read;
 };
 
 
