@@ -21,6 +21,44 @@
 extern Ixp9Srv p9srv;
 struct rbus_root* RbusRoot = NULL;
 
+static struct rbus_child root_children[] = {
+    {"iface", NULL},
+    {"net", NULL},
+    NULL,
+};
+
+static char zomg[] = "ZOMG\n";
+
+static int read_state(struct rbus_t *rbus, char* buf) {
+    buf = zomg;
+
+    return 0;
+};
+
+static int read_iface_state(struct rbus_t *rbus, char* buf) {
+    buf = zomg;
+
+    return 0;
+};
+
+static int read_iface_network(struct rbus_t *rbus, char* buf) {
+    buf = zomg;
+
+    return 0;
+};
+
+
+static struct rbus_prop root_props[] = {
+    {"status", read_state},
+    {"debug", read_state},
+    NULL,
+};
+
+static struct rbus_prop iface_props[] = {
+    {"state", read_iface_state},
+    {"current_network", read_iface_network},
+};
+
 /*
  * Callback from epool
  * */
@@ -87,7 +125,21 @@ struct rbus_root * wpas_rbus_init(struct wpa_global *global)
 
     priv->srv = srv;
 
+    priv->rbus.childs = &root_children[0];
+
+    struct rbus_child *child = priv->rbus.childs;
+
+    while((child+1)->name[0]) {
+        child->next = child+1;
+        child++;
+    }
+
+    priv->rbus.props = &root_props[0];
+    priv->rbus.root = priv;
+
     RbusRoot = priv;
+
+    printf("init: root %x, rbus %x\n", priv, &priv->rbus);
 
     return priv;
 }
@@ -108,9 +160,29 @@ int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s) {
 
     priv = os_zalloc(sizeof(*priv));
     priv->native = wpa_s;
+    strcpy(priv->name, wpa_s->ifname);
     priv->root = wpa_s->global->rbus_root;
 
+    priv->props = &iface_props[0];
+
     wpa_s->rbus = priv;
+
+    printf("root: wpa_s %x, root: %x, rbus %x\n",
+            (int)wpa_s,
+            (int)priv->root,
+            (int)priv
+    );
+
+    struct rbus_child *child = priv->root->rbus.childs;
+
+    while (child->next)
+        child = child->next;
+
+    child->next = os_zalloc(sizeof(*child));
+    child = child->next;
+
+    strcpy(child->name, "iface");
+    child->rbus = priv;
 
     return 0;
 

@@ -45,84 +45,120 @@ rbus_event(IxpPending *events, const char *format, ...) {
 
 
 enum {
-    FsRoot,
-
-    FsFRctl,
-    FsFEvent,
+    FsObject,
+    FsProp,
+    FsList,
+    FsEvent,
 };
 
 typedef char* (*MsgFunc)(void*, IxpMsg*);
 typedef char* (*BufFunc)(void*);
 
 
-typedef struct ActionTab ActionTab;
-struct ActionTab {
-	MsgFunc		msg;
-	BufFunc		read;
-	size_t		buffer;
-	size_t		size;
-	int		max;
-};
-
-static char ctl_buf[] = "ctl ya";
-
-char *readctl(void) {
-    return ctl_buf;
-};
-
-ActionTab actiontab[] = {
-    [FsFRctl] = {
-        .msg = (MsgFunc)0,
-        .read = (BufFunc)readctl,
-    },
-};
-
-static IxpDirtab dirtab_root[]=	 {
-    {".",	P9_QTDIR,	FsRoot,		0500|P9_DMDIR },
-    {"ctl",	P9_QTAPPEND,	FsFRctl,	0600|P9_DMAPPEND },
-    {"event",	P9_QTFILE,	FsFEvent,	0600 },
-    {NULL},
-};
-
-static IxpDirtab* dirtab[] = {
-	[FsRoot] = dirtab_root,
-};
-
 static IxpFileId*
 lookup_file(IxpFileId *parent, char *name)
 {
 	IxpFileId *ret, *file, **last;
-	IxpDirtab *dir;
 
 	if(!(parent->tab.perm & P9_DMDIR))
 		return NULL;
 
-	dir = dirtab[parent->tab.type];
+	//dir = parent->p.rbus->dirtab;
+
 	last = &ret;
 	ret = NULL;
-	for(; dir->name; dir++) {
-#               define push_file(nam, id_, vol)   \
-			file = ixp_srv_getfile(); \
-			file->id = id_;           \
-			file->volatil = vol;      \
-			*last = file;             \
-			last = &file->next;       \
-			file->tab = *dir;         \
-			file->tab.name = strdup(nam)
-		if(!name && !(dir->flags & FLHide) || name && !strcmp(name, dir->name)) {
-			push_file(file->tab.name, 0, 0);
-			file->p.ref = parent->p.ref;
-			file->index = parent->index;
 
-                        file->p.rbus = &RbusRoot->rbus;
+
+#       define push_file(nam, id_, vol)   \
+            file = ixp_srv_getfile(); \
+            file->id = id_;           \
+            file->volatil = vol;      \
+            *last = file;             \
+            last = &file->next;       \
+            file->tab = parent->tab; \
+            file->tab.name = strdup(nam)
+
+        if(!name) {
+            push_file(".", 0, 0);
+            file->index = 0;
+        }
+
+        if( !parent->tab.type ) {
+
+            if(!name || !strcmp(name, "events")) {
+                push_file("events", 1, 0);
+                file->tab.perm = P9_OREAD;
+                file->tab.qtype = P9_QTFILE | P9_QTAPPEND;
+                file->tab.type = FsEvent;
+
+                file->p.rbus = parent->p.rbus;
+            }
+
+            struct rbus_prop *prop = parent->p.rbus->props;
+
+            for(; prop && prop->name[0]; prop++) {
+
+                    if(!name || name && !strcmp(name, prop->name)) {
+
+                            push_file(prop->name, (int)prop, 1);
+
+                            file->p.ref = parent->p.ref;
+                            file->p.rbus = parent->p.rbus;
+
+                            file->index = (int)prop;
+                            file->tab.perm = 0600;
+                            file->tab.qtype = P9_QTFILE;
+                            file->tab.type = FsProp;
+
+                            /* Special considerations: */
+                            if(name)
+                                    goto LastItem;
+                    }
+            }
+        }
+
+        struct rbus_child *child = parent->p.rbus->childs;
+        char *cname;
+	for(; child; child = child->next) {
+
+                if(!child->rbus != !parent->tab.type)
+                        continue;
+
+                if(child->rbus)
+                        cname = child->rbus->name;
+                else
+                        cname = child->name;
+
+                if(child->rbus && strcmp(parent->tab.name, child->name))
+                        continue;
+
+
+		if(!name || name && !strcmp(name, cname)) {
+
+                        push_file(cname, (int)child, 1);
+                        if(child->rbus) {
+                            file->p.rbus = child->rbus;
+                            file->tab.type = FsObject;
+                        } else  {
+                            file->p.rbus = parent->p.rbus;
+                            file->tab.type = FsList;
+                        }
+
+
+			file->index = (int)child;
+                        file->tab.perm = 0700|P9_DMDIR;
+                        file->tab.qtype = P9_QTDIR;
+
 			/* Special considerations: */
 			if(name)
 				goto LastItem;
 		}
-#		undef push_file
 	}
+
+
 LastItem:
 	*last = NULL;
+
 	return ret;
 }
 
@@ -149,8 +185,8 @@ fs_attach(Ixp9Req *r) {
 	IxpFileId *f;
 
 	f = ixp_srv_getfile();
-	f->tab = dirtab[FsRoot][0];
-	f->tab.name = strdup("/");
+	f->tab = (IxpDirtab){"/", P9_QTDIR, FsObject, 0500|P9_DMDIR};
+        f->p.rbus = &RbusRoot->rbus;
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);
@@ -176,11 +212,8 @@ fs_open(Ixp9Req *r)
 		return;
 	}
 
-
-	switch(f->tab.type) {
-	case FsFEvent:
+	if(f->tab.qtype & P9_QTAPPEND) {
 		ixp_pending_pushfid(&f->p.rbus->events, r->fid);
-		break;
         }
 
 	ixp_respond(r, NULL);
@@ -225,7 +258,7 @@ fs_read(Ixp9Req *r)
 {
 	char *buf;
 	IxpFileId *f;
-	ActionTab *t;
+	//ActionTab *t;
 	int n, found;
 
 	f = r->fid->aux;
@@ -244,7 +277,8 @@ fs_read(Ixp9Req *r)
 			ixp_pending_respond(r);
 			return;
 		}
-		t = &actiontab[f->tab.type];
+		//t = &actiontab[f->tab.type];
+                /*
 		if(f->tab.type < nelem(actiontab)) {
 			if(t->read)
 				buf = t->read(f->p.ref);
@@ -258,7 +292,7 @@ fs_read(Ixp9Req *r)
 			ixp_srv_readbuf(r, buf, n);
 			ixp_respond(r, NULL);
 			found++;
-		}
+		}*/
 	done:
 		switch(f->tab.type) {
 		default:

@@ -20,7 +20,7 @@ void wpas_rbus_signal_prop_changed(struct wpa_supplicant *wpa_s, enum wpas_rbus_
 
     rbus_event(&wpa_s->rbus->events, "prop %s\n", wpas_rbus_prop_s[prop]);
 
-    rbus_event(&wpa_s->rbus->root->rbus.events, "net prop %s\n", wpas_rbus_prop_s[prop]);
+    rbus_event(&wpa_s->global->rbus_root->rbus.events, "net prop %s\n", wpas_rbus_prop_s[prop]);
 
 }
 

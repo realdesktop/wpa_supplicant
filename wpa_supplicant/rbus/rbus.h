@@ -25,10 +25,29 @@ union IxpFileIdU {
 
 typedef struct IxpServer IxpServer;
 
+
+struct rbus_child {
+        char name[32];
+        struct rbus_t *rbus;
+        struct rbus_child *next;
+};
+
+
+typedef int (*rbus_prop_read)(struct rbus_t*, char*);
+
+struct rbus_prop {
+        char name[32];
+        rbus_prop_read *read;
+};
+
+
 struct rbus_t {
+        char name[32];
         void *native;
         struct rbus_root *root;
         IxpPending events;
+        struct rbus_child *childs;
+        struct rbus_prop *props;
 };
 
 struct rbus_root {
