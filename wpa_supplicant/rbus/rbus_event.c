@@ -3,7 +3,8 @@
 
 #include "../wpa_supplicant_i.h"
 
-#include "rbus.h"
+#include "rbus_wpas.h"
+#include <rbus.h>
 
 char* wpas_rbus_prop_s[] = {
     "ap_scan",

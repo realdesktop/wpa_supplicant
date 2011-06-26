@@ -15,13 +15,11 @@
 #include <sys/wait.h>
 
 
-#include "rbus.h"
+#include <rbus.h>
+#include "rbus_wpas.h"
 #include "../wpa_supplicant_i.h"
 #include "../config_ssid.h"
 #include "../bss.h"
-
-extern Ixp9Srv p9srv;
-struct rbus_root* RbusRoot = NULL;
 
 static struct rbus_child root_children[] = {
     {"iface", NULL},
@@ -173,35 +171,17 @@ void unregister_fd(IxpConn* conn) {
 struct rbus_root * wpas_rbus_init(struct wpa_global *global)
 {
     struct rbus_root *priv;
+    int fd;
 
-    priv = os_zalloc(sizeof(*priv));
-    if (priv == NULL)
-            return NULL;
-    //priv->global = global;
+    priv = rbus_init("unix!/tmp/wpa_supplicant.9p");
+    fd = priv->srv->conn->fd;
 
     wpa_printf(MSG_DEBUG, "rbus: init real bus here");
 
-    // accept
-    IxpServer *srv = os_zalloc(sizeof(IxpServer));
-    char *address;
-    int fd;
-
-    ixp_set_fd_callbacks(&register_fd, &unregister_fd);
-
-    // FIXME: hardcoded
-    address = "unix!/tmp/wpa_supplicant.9p";
-
-    fd = ixp_announce(address);
-    if(fd < 0) {
-            err(1, "ixp_announce");
-    }
-
-    ixp_listen(srv, fd, &p9srv, rbus_ixp_serve9conn, NULL);
+    rbus_callbacks(&register_fd, &unregister_fd);
 
     eloop_register_sock(fd, EVENT_TYPE_READ, (eloop_sock_handler)process_watch_read,
-			    priv, srv->conn);
-
-    priv->srv = srv;
+			    priv, priv->srv->conn);
 
     priv->rbus.childs = &root_children[0];
 
@@ -214,8 +194,6 @@ struct rbus_root * wpas_rbus_init(struct wpa_global *global)
 
     priv->rbus.props = &root_props[0];
     priv->rbus.root = priv;
-
-    RbusRoot = priv;
 
     return priv;
 }

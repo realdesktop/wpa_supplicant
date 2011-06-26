@@ -22,7 +22,7 @@
 #include "dbus/dbus_common.h"
 #include "dbus/dbus_old.h"
 #include "dbus/dbus_new.h"
-#include "rbus/rbus.h"
+#include "rbus/rbus_wpas.h"
 #include "driver_i.h"
 #include "scan.h"
 #include "p2p_supplicant.h"
