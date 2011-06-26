@@ -447,3 +447,48 @@ void wpas_rbus_register_bss(struct wpa_supplicant *wpa_s,
     child->rbus = priv;
 
 }
+
+void wpas_rbus_unregister_bss(struct wpa_supplicant *wpa_s,
+			   u8 bssid[ETH_ALEN], unsigned int id) {
+    wpa_printf(MSG_ERROR, "bss remove %d", id);
+
+    struct wpas_rbus_bss * bss;
+    struct rbus_child *child = wpa_s->rbus->childs, *p=NULL;
+
+    while (child) {
+        printf("child %x\n", (int)child);
+        if(strcmp(child->name, "bss"))
+            goto skip;
+
+        if(!child->rbus)
+            goto skip;
+
+        bss = child->rbus->native;
+
+        if(bss->id != id)
+            goto skip;
+
+        printf("found %d\n", id);
+
+        os_free(bss);
+        os_free(child->rbus);
+
+        if(p)
+            p->next = child->next;
+
+        os_free(child);
+
+        return;
+
+    skip:
+
+        p = child;
+        child = child->next;
+
+    }
+
+    wpa_printf(MSG_ERROR, "no bss to remove! wtf?");
+
+
+
+}

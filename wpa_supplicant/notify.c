@@ -261,6 +261,8 @@ void wpas_notify_bss_removed(struct wpa_supplicant *wpa_s,
 			     u8 bssid[], unsigned int id)
 {
 	wpas_dbus_unregister_bss(wpa_s, bssid, id);
+	wpas_rbus_unregister_bss(wpa_s, bssid, id);
+
 	wpa_msg_ctrl(wpa_s, MSG_INFO, WPA_EVENT_BSS_REMOVED "%u " MACSTR,
 		     id, MAC2STR(bssid));
 }

@@ -41,5 +41,7 @@ void wpas_rbus_register_network(struct wpa_supplicant *wpa_s, struct wpa_ssid *s
 
 void wpas_rbus_register_bss(struct wpa_supplicant *wpa_s,
 			   unsigned char bssid[6], unsigned int id);
+void wpas_rbus_unregister_bss(struct wpa_supplicant *wpa_s,
+			   unsigned char bssid[6], unsigned int id);
 
 #endif
