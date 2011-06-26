@@ -235,6 +235,7 @@ void wpas_notify_network_added(struct wpa_supplicant *wpa_s,
 			       struct wpa_ssid *ssid)
 {
 	wpas_dbus_register_network(wpa_s, ssid);
+        wpas_rbus_register_network(wpa_s, ssid);
 }
 
 

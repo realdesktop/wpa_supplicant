@@ -40,6 +40,11 @@ struct rbus_prop {
         rbus_prop_read read;
 };
 
+struct wpas_rbus_net {
+        struct wpa_supplicant *wpa_s;
+        struct wpa_ssid *ssid;
+};
+
 
 struct rbus_t {
         char name[32];
@@ -73,6 +78,7 @@ void wpas_rbus_deinit(struct rbus_root *priv);
 void wpas_rbus_signal_prop_changed(struct wpa_supplicant *wpa_s, enum wpas_rbus_prop prop);
 
 int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s);
+void wpas_rbus_register_network(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid);
 
 void rbus_event(IxpPending *events, const char *format, ...);
 

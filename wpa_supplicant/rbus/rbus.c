@@ -24,6 +24,11 @@ struct rbus_root* RbusRoot = NULL;
 
 static struct rbus_child root_children[] = {
     {"iface", NULL},
+/* move to net    {"net", NULL}, */
+    NULL,
+};
+
+static struct rbus_child iface_children[] = {
     {"net", NULL},
     NULL,
 };
@@ -61,6 +66,13 @@ char* read_iface_name(struct rbus_t *rbus, char* buf) {
 static struct rbus_prop root_props[] = {
     {"status", read_state},
     {"debug", read_state},
+/*
+ *  {"debug/level",
+ *  {"debug/timestamp",
+ *  {"debug/showkeys",
+ * NO ->  {"interfaces"
+ *  {"eap_methods",
+ *  */
     NULL,
 };
 
@@ -68,6 +80,22 @@ static struct rbus_prop iface_props[] = {
     {"state", read_iface_state},
     {"current_ssid", read_iface_network},
     {"ifname", read_iface_name},
+    NULL,
+};
+
+char *read_net_enabled(struct rbus_t *rbus, char* buf) {
+    struct wpas_rbus_net *net = rbus->native;
+
+    return net->ssid->disabled ? "0" : "1";
+};
+
+static struct rbus_prop net_props[] = {
+/*
+ * WTF? {"properties,
+ * {"enabled",
+ *
+ * */
+    {"enabled", read_net_enabled},
     NULL,
 };
 
@@ -175,6 +203,15 @@ int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s) {
     strcpy(priv->name, wpa_s->ifname);
     priv->root = wpa_s->global->rbus_root;
 
+    priv->childs = &iface_children[0];
+
+    struct rbus_child *child = priv->childs;
+
+    while((child+1)->name[0]) {
+        child->next = child+1;
+        child++;
+    }
+
     priv->props = &iface_props[0];
 
     wpa_s->rbus = priv;
@@ -185,7 +222,7 @@ int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s) {
             (int)priv
     );
 
-    struct rbus_child *child = priv->root->rbus.childs;
+    child = priv->root->rbus.childs;
 
     while (child->next)
         child = child->next;
@@ -197,5 +234,51 @@ int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s) {
     child->rbus = priv;
 
     return 0;
+
+};
+
+void wpas_rbus_register_network(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid) {
+
+    wpa_printf(MSG_ERROR, "net add");
+
+    struct rbus_t *priv;
+
+    priv = os_zalloc(sizeof(*priv));
+
+
+    struct wpas_rbus_net * net;
+    net =  os_zalloc(sizeof(struct wpas_rbus_net));
+
+    net->ssid = ssid;
+    net->wpa_s = wpa_s;
+
+    priv->native = net;
+
+    if(ssid->ssid) {
+        strcpy(priv->name, ssid->ssid); // FIXME: wrong!
+    } else {
+        strcpy(priv->name, "NONE");
+    }
+
+    priv->root = wpa_s->global->rbus_root;
+
+
+    priv->props = &net_props[0];
+
+    //wpa_s->rbus = priv; FIXME: wtf?
+
+    struct rbus_child *child = wpa_s->rbus->childs;
+
+    while (child->next)
+        child = child->next;
+
+    child->next = os_zalloc(sizeof(*child));
+    child = child->next;
+
+    strcpy(child->name, "net");
+    child->rbus = priv;
+
+    return 0;
+
 
 };
