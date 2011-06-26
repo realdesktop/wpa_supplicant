@@ -91,4 +91,8 @@ void rbus_event(IxpPending *events, const char *format, ...);
 void wpas_rbus_register_bss(struct wpa_supplicant *wpa_s,
 			   unsigned char bssid[6], unsigned int id);
 
+void ixp_set_fd_callbacks(void (*register_fd_cb)(IxpConn*), void (*unregister_fd_cb)(IxpConn*));
+void rbus_ixp_serve9conn(IxpConn *c);
+
+
 #endif

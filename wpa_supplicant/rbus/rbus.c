@@ -186,6 +186,8 @@ struct rbus_root * wpas_rbus_init(struct wpa_global *global)
     char *address;
     int fd;
 
+    ixp_set_fd_callbacks(&register_fd, &unregister_fd);
+
     // FIXME: hardcoded
     address = "unix!/tmp/wpa_supplicant.9p";
 
@@ -194,7 +196,7 @@ struct rbus_root * wpas_rbus_init(struct wpa_global *global)
             err(1, "ixp_announce");
     }
 
-    ixp_listen(srv, fd, &p9srv, ixp_serve9conn, NULL);
+    ixp_listen(srv, fd, &p9srv, rbus_ixp_serve9conn, NULL);
 
     eloop_register_sock(fd, EVENT_TYPE_READ, (eloop_sock_handler)process_watch_read,
 			    priv, srv->conn);

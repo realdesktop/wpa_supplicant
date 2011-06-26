@@ -1164,8 +1164,8 @@ LIBS += $(DBUS_LIBS)
 
 ifdef CONFIG_CTRL_IFACE_RBUS
 RBUS_CFLAGS += -DCONFIG_CTRL_IFACE_RBUS -DCONFIG_RBUS
-RBUS_OBJS += rbus/rbus.o rbus/fs.o rbus/libixp_request.o rbus/rbus_event.o
-LIBS += -lixp
+RBUS_OBJS += rbus/rbus.o rbus/rbus_event.o
+LIBS += -lixp -lrbus -L/usr/local/lib -Wl,-rpath=/usr/local/lib
 endif
 
 OBJS += $(RBUS_OBJS)
