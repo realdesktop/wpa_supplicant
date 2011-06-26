@@ -250,6 +250,8 @@ void wpas_notify_bss_added(struct wpa_supplicant *wpa_s,
 			   u8 bssid[], unsigned int id)
 {
 	wpas_dbus_register_bss(wpa_s, bssid, id);
+        wpas_rbus_register_bss(wpa_s, bssid, id);
+
 	wpa_msg_ctrl(wpa_s, MSG_INFO, WPA_EVENT_BSS_ADDED "%u " MACSTR,
 		     id, MAC2STR(bssid));
 }

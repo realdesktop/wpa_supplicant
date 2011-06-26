@@ -45,6 +45,12 @@ struct wpas_rbus_net {
         struct wpa_ssid *ssid;
 };
 
+struct wpas_rbus_bss {
+        struct wpa_supplicant *wpa_s;
+        int id;
+};
+
+
 
 struct rbus_t {
         char name[32];
@@ -81,5 +87,8 @@ int wpas_rbus_register_interface(struct wpa_supplicant *wpa_s);
 void wpas_rbus_register_network(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid);
 
 void rbus_event(IxpPending *events, const char *format, ...);
+
+void wpas_rbus_register_bss(struct wpa_supplicant *wpa_s,
+			   unsigned char bssid[6], unsigned int id);
 
 #endif

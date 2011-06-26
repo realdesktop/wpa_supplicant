@@ -18,6 +18,7 @@
 #include "rbus.h"
 #include "../wpa_supplicant_i.h"
 #include "../config_ssid.h"
+#include "../bss.h"
 
 extern Ixp9Srv p9srv;
 struct rbus_root* RbusRoot = NULL;
@@ -30,6 +31,7 @@ static struct rbus_child root_children[] = {
 
 static struct rbus_child iface_children[] = {
     {"net", NULL},
+    {"bss", NULL},
     NULL,
 };
 
@@ -96,6 +98,22 @@ static struct rbus_prop net_props[] = {
  *
  * */
     {"enabled", read_net_enabled},
+    NULL,
+};
+
+char *read_bss_ssid(struct rbus_t *rbus, char* buf) {
+    struct wpas_rbus_bss *bss = rbus->native;
+
+    struct wpa_bss *res = wpa_bss_get_id(bss->wpa_s, bss->id);
+
+    if(res->ssid)
+        return res->ssid;
+    else
+        return "NONE";
+};
+
+static struct rbus_prop bss_props[] = {
+    {"ssid", read_bss_ssid},
     NULL,
 };
 
@@ -178,8 +196,6 @@ struct rbus_root * wpas_rbus_init(struct wpa_global *global)
     priv->rbus.root = priv;
 
     RbusRoot = priv;
-
-    printf("init: root %x, rbus %x\n", priv, &priv->rbus);
 
     return priv;
 }
@@ -278,7 +294,43 @@ void wpas_rbus_register_network(struct wpa_supplicant *wpa_s, struct wpa_ssid *s
     strcpy(child->name, "net");
     child->rbus = priv;
 
-    return 0;
-
-
 };
+
+void wpas_rbus_register_bss(struct wpa_supplicant *wpa_s,
+			   u8 bssid[ETH_ALEN], unsigned int id) {
+
+    wpa_printf(MSG_ERROR, "bss add");
+
+    struct rbus_t *priv;
+
+    priv = os_zalloc(sizeof(*priv));
+
+
+    struct wpas_rbus_bss * bss;
+    bss =  os_zalloc(sizeof(struct wpas_rbus_bss));
+
+    bss->id = id;
+    bss->wpa_s = wpa_s;
+
+    priv->native = bss;
+
+    sprintf(priv->name, "bss%d", id);
+
+    priv->root = wpa_s->global->rbus_root;
+
+    priv->props = &bss_props[0];
+
+    //wpa_s->rbus = priv; FIXME: wtf?
+
+    struct rbus_child *child = wpa_s->rbus->childs;
+
+    while (child->next)
+        child = child->next;
+
+    child->next = os_zalloc(sizeof(*child));
+    child = child->next;
+
+    strcpy(child->name, "bss");
+    child->rbus = priv;
+
+}
