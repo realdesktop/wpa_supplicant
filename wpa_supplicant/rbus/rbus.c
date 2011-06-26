@@ -91,8 +91,15 @@ char *read_net_enabled(struct rbus_t *rbus, char* buf) {
     return net->ssid->disabled ? "0" : "1";
 };
 
+char *read_net_prop(struct rbus_t *rbus, char *prop) {
+    struct wpas_rbus_net *net = rbus->native;
+
+    return wpa_config_get(net->ssid, prop);
+};
+
 static struct rbus_prop net_props[] = {
 /*
+ * DYNAMIC properties list, zomg
  * WTF? {"properties,
  * {"enabled",
  *
@@ -114,6 +121,17 @@ char *read_bss_ssid(struct rbus_t *rbus, char* buf) {
 
 static struct rbus_prop bss_props[] = {
     {"ssid", read_bss_ssid},
+/*
+    {"bssid",
+    {"privacy",
+    {"mode",
+    {"signal",
+    {"freq",
+    {"rates",
+    {"wpa",
+    {"rsn",
+    {"ies",
+*/
     NULL,
 };
 
@@ -278,8 +296,23 @@ void wpas_rbus_register_network(struct wpa_supplicant *wpa_s, struct wpa_ssid *s
 
     priv->root = wpa_s->global->rbus_root;
 
+    priv->props = os_zalloc(sizeof(struct rbus_prop) * 32); // FIXME
 
-    priv->props = &net_props[0];
+    char **props = wpa_config_get_all(net->ssid, 1);
+    char **iterator;
+    struct rbus_prop *prop = priv->props;
+
+    iterator = props;
+    while (*iterator) {
+        strcpy(prop->name, *iterator);
+        prop->read = read_net_prop;
+
+        iterator += 2;
+
+        prop++;
+    }
+
+    memcpy(prop, &net_props[0], sizeof(struct rbus_prop));
 
     //wpa_s->rbus = priv; FIXME: wtf?
 

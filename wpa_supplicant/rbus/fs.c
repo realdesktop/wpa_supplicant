@@ -284,7 +284,7 @@ fs_read(Ixp9Req *r)
                         if(strcmp(prop->name, f->tab.name))
                             continue;
 
-                        buf = prop->read(f->p.rbus, buf);
+                        buf = prop->read(f->p.rbus, prop->name);
                         n = strlen(buf);
 
                         ixp_srv_readbuf(r, buf, n);
